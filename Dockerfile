@@ -1,8 +1,25 @@
-FROM node
-RUN apt-get update
+# phase de build Angular
+FROM node:20-slim AS builder
+
 WORKDIR /usr/app
+
+# copie des dépendances
+COPY package*.json ./
+
+# installation propre des dépendances
+RUN npm ci
+
+# copie du projet
 COPY . ./
-RUN npm install
+
+# build Angular
 RUN npm run build
-EXPOSE 4200
-CMD ["npm", "run", "start"]
+
+# image finale nginx
+FROM nginx:1.27-alpine
+
+# exposition du port nginx
+EXPOSE 80
+
+# copie du build Angular
+COPY --from=builder /usr/app/dist/angularmaterial/ /usr/share/nginx/html
